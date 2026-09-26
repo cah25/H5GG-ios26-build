@@ -1,0 +1,239 @@
+name: iOS 26/27 embedded artifacts
+
+
+
+on:
+
+  workflow_dispatch:
+  
+  push:
+  
+    branches: [ main ]
+    
+
+
+permissions:
+
+  contents: read
+  
+
+
+jobs:
+
+  build-ios27-unsigned:
+  
+    runs-on: xcode-27
+    
+    env:
+    
+      THEOS: ${{ github.workspace }}/theos
+      
+      FRIDA_VERSION: '17.19.0'
+      
+      FRIDA_RELEASE: https://github.com/frida/frida/releases/download/17.19.0
+      
+    steps:
+    
+      - name: Checkout build files
+      
+        uses: actions/checkout@v4
+        
+      - name: Verify Xcode 27 and iOS 27 SDK
+      
+        shell: bash
+        
+        run: |
+        
+          set -euo pipefail
+          
+          xcodebuild -version
+          
+          sdk_version="$(xcrun --sdk iphoneos --show-sdk-version)"
+          
+          echo "iphoneos SDK: ${sdk_version}"
+          
+          [[ "$sdk_version" == 27.* ]]
+          
+      - name: Checkout public H5GG source
+      
+        shell: bash
+        
+        run: |
+        
+          set -euo pipefail
+          
+          git clone --depth 1 https://github.com/H5GG/H5GG.git source
+          
+          git -C source apply ../h5gg-ios26-source-only.patch
+          
+      - name: Install Theos and SDK headers
+      
+        shell: bash
+        
+        run: |
+        
+          set -euo pipefail
+          
+          git clone --depth 1 https://github.com/theos/theos.git "$THEOS"
+          
+          git clone --depth 1 https://github.com/theos/sdks.git "$THEOS/sdks"
+          
+      - name: Download Frida 17.19.0 arm64 and arm64e devkits
+      
+        shell: bash
+        
+        working-directory: source/pluginDemo/h5frida15.1.24
+        
+        run: |
+        
+          set -euo pipefail
+          
+          mkdir -p "$RUNNER_TEMP/frida/arm64" "$RUNNER_TEMP/frida/arm64e"
+          
+          curl -fsSL --retry 3 -o "$RUNNER_TEMP/frida/arm64.tar.xz" "$FRIDA_RELEASE/frida-core-devkit-${FRIDA_VERSION}-ios-arm64.tar.xz"
+          
+          curl -fsSL --retry 3 -o "$RUNNER_TEMP/frida/arm64e.tar.xz" "$FRIDA_RELEASE/frida-core-devkit-${FRIDA_VERSION}-ios-arm64e.tar.xz"
+          
+          tar -xf "$RUNNER_TEMP/frida/arm64.tar.xz" -C "$RUNNER_TEMP/frida/arm64"
+          
+          tar -xf "$RUNNER_TEMP/frida/arm64e.tar.xz" -C "$RUNNER_TEMP/frida/arm64e"
+          
+          cp "$RUNNER_TEMP/frida/arm64/frida-core.h" ./frida-core-15.1.24.h
+          
+          lipo -create "$RUNNER_TEMP/frida/arm64/libfrida-core.a" "$RUNNER_TEMP/frida/arm64e/libfrida-core.a" -output "libfrida-core-${FRIDA_VERSION}.a"
+          
+          test -f libdobby_fixed.a
+          
+      - name: Build h5frida
+      
+        shell: bash
+        
+        working-directory: source/pluginDemo/h5frida15.1.24
+        
+        run: |
+        
+          set -euo pipefail
+          
+          make clean || true
+          
+          make THEOS="$THEOS" FRIDA_VERSION="$FRIDA_VERSION" DEBUG=1 FINALPACKAGE=0 STRIP=0
+          
+          test -f .theos/obj/debug/h5frida.dylib
+          
+      - name: Build hookme test dylib
+      
+        shell: bash
+        
+        working-directory: source/pluginDemo/hookme-test
+        
+        run: |
+        
+          set -euo pipefail
+          
+          make clean || true
+          
+          make THEOS="$THEOS" DEBUG=1 FINALPACKAGE=0 STRIP=0
+          
+          test -f .theos/obj/debug/hookme.dylib
+          
+      - name: Download Frida Gadget
+      
+        shell: bash
+        
+        run: |
+        
+          set -euo pipefail
+          
+          mkdir -p "$RUNNER_TEMP/gadget"
+          
+          curl -fsSL --retry 3 -o "$RUNNER_TEMP/gadget.dylib.xz" "$FRIDA_RELEASE/frida-gadget-${FRIDA_VERSION}-ios-universal.dylib.xz"
+          
+          xz -d "$RUNNER_TEMP/gadget.dylib.xz"
+          
+      - name: Assemble four requested files
+      
+        shell: bash
+        
+        run: |
+        
+          set -euo pipefail
+          
+          out="$RUNNER_TEMP/h5gg-ios26-embedded"
+          
+          mkdir -p "$out"
+          
+          cp source/pluginDem
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
