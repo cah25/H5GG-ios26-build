@@ -46,7 +46,7 @@ index c672c01..6ebdd2b 100644
  
  include $(THEOS_MAKE_PATH)/tweak.mk
 diff --git a/pluginDemo/h5frida15.1.24/Makefile b/pluginDemo/h5frida15.1.24/Makefile
-index 7a06aa0..eeab11e 100644
+index 7a06aa0..54d73af 100644
 --- a/pluginDemo/h5frida15.1.24/Makefile
 +++ b/pluginDemo/h5frida15.1.24/Makefile
 @@ -1,5 +1,5 @@
@@ -66,7 +66,7 @@ index 7a06aa0..eeab11e 100644
  h5frida_FILES = h5frida.mm fishhook.c static-inline.mm ldid-master/ldid.cpp ldid-master/lookup2.c
  h5frida_CFLAGS = -fobjc-arc -fvisibility=hidden 
 -h5frida_CCFLAGS = -fobjc-arc -fvisibility=hidden -std=c++11
-+h5frida_CCFLAGS = -fobjc-arc -fvisibility=hidden -std=c++17
++h5frida_CCFLAGS = -fobjc-arc -fvisibility=hidden -std=c++17 -Wno-vla-cxx-extension -Wno-error=misleading-indentation -Wno-error=reorder-init-list
  h5frida_LDFLAGS += -L./
 -h5frida_LDFLAGS += libfrida-core-15.1.24.a -lresolv -ldobby_fixed
 +h5frida_LDFLAGS += libfrida-core-$(FRIDA_VERSION).a -lresolv -ldobby_fixed
@@ -151,13 +151,17 @@ index 96a1ab9..b5c73eb 100644
  
  -(double)pluginVersion {
 diff --git a/pluginDemo/h5frida15.1.24/static-inline.mm b/pluginDemo/h5frida15.1.24/static-inline.mm
-index d4d9d1b..f625a81 100644
+index d4d9d1b..74e7306 100644
 --- a/pluginDemo/h5frida15.1.24/static-inline.mm
 +++ b/pluginDemo/h5frida15.1.24/static-inline.mm
-@@ -20,6 +20,16 @@
+@@ -20,6 +20,20 @@
  #define STATIC_HOOK_CODEPAGE_SIZE PAGE_SIZE
  #define STATIC_HOOK_DATAPAGE_SIZE PAGE_SIZE
  
++#ifndef CPU_SUBTYPE_ARM64
++#define CPU_SUBTYPE_ARM64 0
++#endif
++
 +#ifndef CPU_SUBTYPE_ARM64E
 +#define CPU_SUBTYPE_ARM64E 2
 +#endif
@@ -171,7 +175,7 @@ index d4d9d1b..f625a81 100644
  uint64_t va2rva(struct mach_header_64* header, uint64_t va)
  {
      uint64_t rva = va;
-@@ -123,36 +133,42 @@ NSMutableData* load_macho_data(NSString* path)
+@@ -123,36 +137,42 @@ NSMutableData* load_macho_data(NSString* path)
          struct fat_header* fathdr = (struct fat_header*)macho.mutableBytes;
          struct fat_arch* archdr = (struct fat_arch*)((UInt64)fathdr + sizeof(*fathdr));
          NSLog(@"add_hook_section nfat_arch=%d", NXSwapLong(fathdr->nfat_arch));
