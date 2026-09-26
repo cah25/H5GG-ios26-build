@@ -1,12 +1,21 @@
 name: iOS 26/27 embedded artifacts
 
+
+
+
 on:
   workflow_dispatch:
   push:
     branches: [ main ]
 
+
+
+
 permissions:
   contents: read
+
+
+
 
 jobs:
   build-ios27-unsigned:
@@ -55,6 +64,20 @@ jobs:
           cp "$RUNNER_TEMP/frida/arm64/frida-core.h" ./frida-core-15.1.24.h
           lipo -create "$RUNNER_TEMP/frida/arm64/libfrida-core.a" "$RUNNER_TEMP/frida/arm64e/libfrida-core.a" -output "libfrida-core-${FRIDA_VERSION}.a"
           test -f libdobby_fixed.a
+      - name: Build Dobby arm64e static library
+        shell: bash
+        working-directory: source/pluginDemo/h5frida15.1.24
+        run: |
+          set -euo pipefail
+          cmake -S Dobby-fixed -B "$RUNNER_TEMP/dobby-arm64e" -G Xcode \
+            -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_ARCHITECTURES=arm64e \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 -DDOBBY_GENERATE_SHARED=OFF
+          cmake --build "$RUNNER_TEMP/dobby-arm64e" --config Release --target DobbyX
+          find "$RUNNER_TEMP/dobby-arm64e" -name 'libDobbyX.a' -exec cp {} ./libdobby_fixed_arm64e.a \
+          ;
+          test -f libdobby_fixed_arm64e.a
+          lipo -create libdobby_fixed.a libdobby_fixed_arm64e.a -output libdobby_fixed_universal.a
+          lipo -info libdobby_fixed_universal.a
       - name: Build h5frida
         shell: bash
         working-directory: source/pluginDemo/h5frida15.1.24
@@ -66,38 +89,3 @@ jobs:
       - name: Build hookme test dylib
         shell: bash
         working-directory: source/pluginDemo/hookme-test
-        run: |
-          set -euo pipefail
-          make clean || true
-          make THEOS="$THEOS" DEBUG=1 FINALPACKAGE=0 STRIP=0
-          test -f .theos/obj/debug/hookme.dylib
-      - name: Download Frida Gadget
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p "$RUNNER_TEMP/gadget"
-          curl -fsSL --retry 3 -o "$RUNNER_TEMP/gadget.dylib.xz" "$FRIDA_RELEASE/frida-gadget-${FRIDA_VERSION}-ios-universal.dylib.xz"
-          xz -d "$RUNNER_TEMP/gadget.dylib.xz"
-      - name: Assemble four requested files
-        shell: bash
-        run: |
-          set -euo pipefail
-          out="$RUNNER_TEMP/h5gg-ios26-embedded"
-          mkdir -p "$out"
-          cp source/pluginDemo/h5frida15.1.24/.theos/obj/debug/h5frida.dylib "$out/h5frida.dylib"
-          cp source/pluginDemo/hookme-test/.theos/obj/debug/hookme.dylib "$out/hookme.test.dylib"
-          cp "$RUNNER_TEMP/gadget.dylib" "$out/frida-gadget.dylib"
-          cp source/examples-h5frida/frida-server\(non-jailbreak\)/frida-gadget-15.1.24.config "$out/frida-gadget.config"
-          file "$out"/*.dylib
-          xcrun lipo -info "$out"/*.dylib
-          shasum -a 256 "$out"/* > "$out/SHA256SUMS"
-          ditto -c -k --sequesterRsrc --keepParent "$out" "$RUNNER_TEMP/h5gg-ios26-embedded.zip"
-      - name: Upload unsigned artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: h5gg-ios26-embedded-frida-${{ env.FRIDA_VERSION }}
-          path: |
-            ${{ runner.temp }}/h5gg-ios26-embedded.zip
-            ${{ runner.temp }}/h5gg-ios26-embedded/
-          if-no-files-found: error
-          retention-days: 14
