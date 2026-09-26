@@ -1,0 +1,273 @@
+[1mdiff --git a/Makefile b/Makefile[m
+[1mindex a0ae60c..5aa9878 100644[m
+[1m--- a/Makefile[m
+[1m+++ b/Makefile[m
+[36m@@ -1,6 +1,6 @@[m
+[31m-ARCHS = arm64[m
+[32m+[m[32mARCHS = arm64 arm64e[m
+ [m
+[31m-TARGET = iphone:13.7:11.4[m
+[32m+[m[32mTARGET = iphone:16.5:15.0[m
+ [m
+ THEOS_DEVICE_IP = iphoneX.local[m
+ [m
+[36m@@ -17,11 +17,10 @@[m [mTWEAK_NAME = H5GG[m
+ [m
+ H5GG_FILES = Tweak.mm ldid-master/ldid.cpp ldid-master/lookup2.c[m
+ H5GG_CFLAGS = -fobjc-arc -fvisibility=hidden [m
+[31m-H5GG_CCFLAGS = -fobjc-arc -fvisibility=hidden -std=c++11[m
+[32m+[m[32mH5GG_CCFLAGS = -fobjc-arc -fvisibility=hidden -std=c++17[m
+ H5GG_LOGOS_DEFAULT_GENERATOR = internal[m
+ [m
+ include $(THEOS_MAKE_PATH)/tweak.mk[m
+ [m
+ clean::[m
+ 	rm -rf ./packages/*[m
+[31m-[m
+[1mdiff --git a/pluginDemo/customAlert/Makefile b/pluginDemo/customAlert/Makefile[m
+[1mindex c672c01..6ebdd2b 100644[m
+[1m--- a/pluginDemo/customAlert/Makefile[m
+[1m+++ b/pluginDemo/customAlert/Makefile[m
+[36m@@ -1,5 +1,5 @@[m
+[31m-ARCHS = arm64[m
+[31m-TARGET = iphone:13.7:11.4[m
+[32m+[m[32mARCHS = arm64 arm64e[m
+[32m+[m[32mTARGET = iphone:16.5:15.0[m
+ [m
+ THEOS_DEVICE_IP = iphoneX.local[m
+ [m
+[36m@@ -15,7 +15,7 @@[m [mTWEAK_NAME = customAlert[m
+ [m
+ customAlert_FILES = Tweak.mm[m
+ customAlert_CFLAGS = -fobjc-arc -fvisibility=hidden [m
+[31m-customAlert_CCFLAGS = -fobjc-arc -fvisibility=hidden -std=c++11[m
+[32m+[m[32mcustomAlert_CCFLAGS = -fobjc-arc -fvisibility=hidden -std=c++17[m
+ customAlert_LOGOS_DEFAULT_GENERATOR = internal[m
+ [m
+ include $(THEOS_MAKE_PATH)/tweak.mk[m
+[1mdiff --git a/pluginDemo/h5frida15.1.24/Makefile b/pluginDemo/h5frida15.1.24/Makefile[m
+[1mindex 7a06aa0..eeab11e 100644[m
+[1m--- a/pluginDemo/h5frida15.1.24/Makefile[m
+[1m+++ b/pluginDemo/h5frida15.1.24/Makefile[m
+[36m@@ -1,5 +1,5 @@[m
+[31m-ARCHS = arm64[m
+[31m-TARGET = iphone:13.7:11.4[m
+[32m+[m[32mARCHS = arm64 arm64e[m
+[32m+[m[32mTARGET = iphone:16.5:15.0[m
+ [m
+ THEOS_DEVICE_IP = iphoneX.local[m
+ [m
+[36m@@ -13,11 +13,13 @@[m [minclude $(THEOS)/makefiles/common.mk[m
+ [m
+ TWEAK_NAME = h5frida[m
+ [m
+[32m+[m[32mFRIDA_VERSION ?= 17.19.0[m
+[32m+[m
+ h5frida_FILES = h5frida.mm fishhook.c static-inline.mm ldid-master/ldid.cpp ldid-master/lookup2.c[m
+ h5frida_CFLAGS = -fobjc-arc -fvisibility=hidden [m
+[31m-h5frida_CCFLAGS = -fobjc-arc -fvisibility=hidden -std=c++11[m
+[32m+[m[32mh5frida_CCFLAGS = -fobjc-arc -fvisibility=hidden -std=c++17[m
+ h5frida_LDFLAGS += -L./[m
+[31m-h5frida_LDFLAGS += libfrida-core-15.1.24.a -lresolv -ldobby_fixed[m
+[32m+[m[32mh5frida_LDFLAGS += libfrida-core-$(FRIDA_VERSION).a -lresolv -ldobby_fixed[m
+ h5frida_LOGOS_DEFAULT_GENERATOR = internal[m
+ [m
+ include $(THEOS_MAKE_PATH)/tweak.mk[m
+[1mdiff --git a/pluginDemo/h5frida15.1.24/h5frida.mm b/pluginDemo/h5frida15.1.24/h5frida.mm[m
+[1mindex 96a1ab9..b5c73eb 100644[m
+[1m--- a/pluginDemo/h5frida15.1.24/h5frida.mm[m
+[1m+++ b/pluginDemo/h5frida15.1.24/h5frida.mm[m
+[36m@@ -6,6 +6,7 @@[m
+ #include <stdio.h>[m
+ #include <stdlib.h>[m
+ #include <spawn.h>[m
+[32m+[m[32m#include <unistd.h>[m
+ #include <sys/stat.h>[m
+ #include <mach/mach.h>[m
+ #include <mach-o/dyld.h>[m
+[36m@@ -288,7 +289,12 @@[m [mint runCommand(const char *cmd, ...) {[m
+         [m
+         GError * error = NULL;[m
+         FridaDeviceList *devices = frida_device_manager_enumerate_devices_sync (self.manager, NULL, &error);[m
+[31m-        g_assert (error == NULL);[m
+[32m+[m[32m        if (error != NULL || devices == NULL)[m
+[32m+[m[32m        {[m
+[32m+[m[32m            NSLog(@"Frida device enumeration failed: %s", error != NULL ? error->message : "unknown error");[m
+[32m+[m[32m            if (error != NULL) g_error_free(error);[m
+[32m+[m[32m            return self;[m
+[32m+[m[32m        }[m
+ [m
+         self.local_device = NULL;[m
+         gint num_devices = frida_device_list_size (devices);[m
+[36m@@ -303,7 +309,8 @@[m [mint runCommand(const char *cmd, ...) {[m
+ [m
+           g_object_unref (device);[m
+         }[m
+[31m-        g_assert (self.local_device != NULL);[m
+[32m+[m[32m        if (self.local_device == NULL)[m
+[32m+[m[32m            NSLog(@"No Frida remote device was found; attach APIs remain unavailable");[m
+ [m
+         frida_unref (devices);[m
+         devices = NULL;[m
+[36m@@ -362,12 +369,16 @@[m [mint runCommand(const char *cmd, ...) {[m
+     if(access(dylib.UTF8String, F_OK) != 0)[m
+         return NO;[m
+         [m
+[31m-    chmod(dylib.UTF8String, 0755);[m
+[31m-    [m
+[31m-    if(!dlopen(dylib.UTF8String, RTLD_NOW))[m
+[32m+[m[32m    void *handle = dlopen(dylib.UTF8String, RTLD_NOW | RTLD_LOCAL);[m
+[32m+[m[32m    if(handle == NULL)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        const char *error = dlerror();[m
+[32m+[m[32m        NSLog(@"Unable to load Gadget %@: %s", dylib, error != NULL ? error : "unknown dlopen error");[m
+         return NO;[m
+[31m-    [m
+[31m-    while(true)[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    NSDate *deadline = [NSDate dateWithTimeIntervalSinceNow:10.0];[m
+[32m+[m[32m    while([deadline timeIntervalSinceNow] > 0)[m
+     {[m
+         BOOL loaded = NO;[m
+         for(NSDictionary* item in [self enumerate_processes])[m
+[36m@@ -379,12 +390,13 @@[m [mint runCommand(const char *cmd, ...) {[m
+             }[m
+         }[m
+         [m
+[31m-        if(loaded) break;[m
+[31m-    [m
+[31m-        sleep(1);[m
+[32m+[m[32m        if(loaded) return YES;[m
+[32m+[m
+[32m+[m[32m        [NSThread sleepForTimeInterval:0.1];[m
+     }[m
+[31m-    [m
+[31m-    return YES;[m
+[32m+[m
+[32m+[m[32m    NSLog(@"Gadget %@ did not register within the timeout", dylib);[m
+[32m+[m[32m    return NO;[m
+ }[m
+ [m
+ -(double)pluginVersion {[m
+[1mdiff --git a/pluginDemo/h5frida15.1.24/static-inline.mm b/pluginDemo/h5frida15.1.24/static-inline.mm[m
+[1mindex d4d9d1b..f625a81 100644[m
+[1m--- a/pluginDemo/h5frida15.1.24/static-inline.mm[m
+[1m+++ b/pluginDemo/h5frida15.1.24/static-inline.mm[m
+[36m@@ -20,6 +20,16 @@[m
+ #define STATIC_HOOK_CODEPAGE_SIZE PAGE_SIZE[m
+ #define STATIC_HOOK_DATAPAGE_SIZE PAGE_SIZE[m
+ [m
+[32m+[m[32m#ifndef CPU_SUBTYPE_ARM64E[m
+[32m+[m[32m#define CPU_SUBTYPE_ARM64E 2[m
+[32m+[m[32m#endif[m
+[32m+[m
+[32m+[m[32mstatic BOOL supports_arm64_subtype(cpu_subtype_t subtype)[m
+[32m+[m[32m{[m
+[32m+[m[32m    uint32_t base = ((uint32_t)subtype) & CPU_SUBTYPE_MASK;[m
+[32m+[m[32m    return base == CPU_SUBTYPE_ARM64 || base == CPU_SUBTYPE_ARM64E;[m
+[32m+[m[32m}[m
+[32m+[m
+ uint64_t va2rva(struct mach_header_64* header, uint64_t va)[m
+ {[m
+     uint64_t rva = va;[m
+[36m@@ -123,36 +133,42 @@[m [mNSMutableData* load_macho_data(NSString* path)[m
+         struct fat_header* fathdr = (struct fat_header*)macho.mutableBytes;[m
+         struct fat_arch* archdr = (struct fat_arch*)((UInt64)fathdr + sizeof(*fathdr));[m
+         NSLog(@"add_hook_section nfat_arch=%d", NXSwapLong(fathdr->nfat_arch));[m
+[31m-        if(NXSwapLong(fathdr->nfat_arch) != 1) {[m
+[31m-            NSLog(@"macho has too many arch!");[m
+[31m-            return nil;[m
+[32m+[m[32m        uint32_t count = NXSwapLong(fathdr->nfat_arch);[m
+[32m+[m[32m        for (uint32_t i = 0; i < count; i++, archdr++) {[m
+[32m+[m[32m            if (NXSwapLong(archdr->cputype) == CPU_TYPE_ARM64 &&[m
+[32m+[m[32m                supports_arm64_subtype((cpu_subtype_t)NXSwapLong(archdr->cpusubtype))) {[m
+[32m+[m[32m                uint32_t offset = NXSwapLong(archdr->offset);[m
+[32m+[m[32m                uint32_t size = NXSwapLong(archdr->size);[m
+[32m+[m[32m                NSLog(@"selected arm64 slice subtype=%x offset=%x size=%x", NXSwapLong(archdr->cpusubtype), offset, size);[m
+[32m+[m[32m                macho = [NSMutableData dataWithData:[macho subdataWithRange:NSMakeRange(offset, size)]];[m
+[32m+[m[32m                break;[m
+[32m+[m[32m            }[m
+         }[m
+[31m-        [m
+[31m-        if(NXSwapLong(archdr->cputype) != CPU_TYPE_ARM64 || archdr->cpusubtype!=0) {[m
+[31m-            NSLog(@"macho arch not support!");[m
+[32m+[m[32m        if (macho.length == 0 || *(uint32_t *)macho.mutableBytes != MH_MAGIC_64) {[m
+[32m+[m[32m            NSLog(@"macho has no supported arm64/arm64e slice!");[m
+             return nil;[m
+         }[m
+[31m-        NSLog(@"subarch=%x %x", NXSwapLong(archdr->offset), NXSwapLong(archdr->size));[m
+[31m-        macho = [NSMutableData dataWithData:[m
+[31m-                 [macho subdataWithRange:NSMakeRange(NXSwapLong(archdr->offset), NXSwapLong(archdr->size))]];[m
+         [m
+     } else if(magic==FAT_CIGAM_64)[m
+     {[m
+         struct fat_header* fathdr = (struct fat_header*)macho.mutableBytes;[m
+         struct fat_arch_64* archdr = (struct fat_arch_64*)((UInt64)fathdr + sizeof(*fathdr));[m
+         NSLog(@"macho nfat_arch=%d", NXSwapLong(fathdr->nfat_arch));[m
+[31m-        if(NXSwapLong(fathdr->nfat_arch) != 1) {[m
+[31m-            NSLog(@"macho has too many arch!");[m
+[31m-            return nil;[m
+[32m+[m[32m        uint32_t count = NXSwapLong(fathdr->nfat_arch);[m
+[32m+[m[32m        for (uint32_t i = 0; i < count; i++, archdr++) {[m
+[32m+[m[32m            if (NXSwapLong(archdr->cputype) == CPU_TYPE_ARM64 &&[m
+[32m+[m[32m                supports_arm64_subtype((cpu_subtype_t)NXSwapLong(archdr->cpusubtype))) {[m
+[32m+[m[32m                uint64_t offset = NXSwapLongLong(archdr->offset);[m
+[32m+[m[32m                uint64_t size = NXSwapLongLong(archdr->size);[m
+[32m+[m[32m                NSLog(@"selected arm64 slice subtype=%x offset=%llx size=%llx", NXSwapLong(archdr->cpusubtype), offset, size);[m
+[32m+[m[32m                macho = [NSMutableData dataWithData:[macho subdataWithRange:NSMakeRange((NSUInteger)offset, (NSUInteger)size)]];[m
+[32m+[m[32m                break;[m
+[32m+[m[32m            }[m
+         }[m
+[31m-        [m
+[31m-        if(NXSwapLong(archdr->cputype) != CPU_TYPE_ARM64 || archdr->cpusubtype!=0) {[m
+[31m-            NSLog(@"macho arch not support!");[m
+[32m+[m[32m        if (macho.length == 0 || *(uint32_t *)macho.mutableBytes != MH_MAGIC_64) {[m
+[32m+[m[32m            NSLog(@"macho has no supported arm64/arm64e slice!");[m
+             return nil;[m
+         }[m
+[31m-        NSLog(@"subarch=%x %x", NXSwapLong(archdr->offset), NXSwapLong(archdr->size));[m
+[31m-        macho = [NSMutableData dataWithData:[m
+[31m-                 [macho subdataWithRange:NSMakeRange(NXSwapLong(archdr->offset), NXSwapLong(archdr->size))]];[m
+         [m
+     } else if(magic != MH_MAGIC_64) {[m
+         NSLog(@"macho arch not support!");[m
+[1mdiff --git a/pluginDemo/h5frida15.1.24/version.h b/pluginDemo/h5frida15.1.24/version.h[m
+[1mindex 59e1500..0e169d7 100644[m
+[1m--- a/pluginDemo/h5frida15.1.24/version.h[m
+[1m+++ b/pluginDemo/h5frida15.1.24/version.h[m
+[36m@@ -1,7 +1,7 @@[m
+ [m
+ #define H5FRIDA_PLUGIN_VERSION  2.0[m
+ [m
+[31m-#define FRIDA_CORE_VERSION  "15.1.24"[m
+[32m+[m[32m#define FRIDA_CORE_VERSION  "17.19.0"[m
+ [m
+ /*[m
+ h5frida-v1.2 发布:[m
+[36m@@ -36,4 +36,3 @@[m [mh5frida-v2.0:[m
+  5: 修复页面刷新后重载frida脚本失败的问题[m
+  [m
+ */[m
+[31m-[m
+[1mdiff --git a/pluginDemo/hookme-test/Makefile b/pluginDemo/hookme-test/Makefile[m
+[1mindex 2d41d7c..6efe430 100644[m
+[1m--- a/pluginDemo/hookme-test/Makefile[m
+[1m+++ b/pluginDemo/hookme-test/Makefile[m
+[36m@@ -1,5 +1,5 @@[m
+[31m-ARCHS = arm64[m
+[31m-TARGET = iphone:13.7:11.4[m
+[32m+[m[32mARCHS = arm64 arm64e[m
+[32m+[m[32mTARGET = iphone:16.5:15.0[m
+ [m
+ THEOS_DEVICE_IP = iphoneX.local[m
+ [m
+[36m@@ -15,7 +15,7 @@[m [mTWEAK_NAME = hookme[m
+ [m
+ hookme_FILES = Tweak.mm[m
+ hookme_CFLAGS = -fobjc-arc -fvisibility=hidden [m
+[31m-hookme_CCFLAGS = -fobjc-arc -fvisibility=hidden -std=c++11[m
+[32m+[m[32mhookme_CCFLAGS = -fobjc-arc -fvisibility=hidden -std=c++17[m
+ hookme_LOGOS_DEFAULT_GENERATOR = internal[m
+ [m
+ include $(THEOS_MAKE_PATH)/tweak.mk[m
