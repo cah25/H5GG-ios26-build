@@ -66,7 +66,7 @@ index 7a06aa0..eeab11e 100644
  h5frida_FILES = h5frida.mm fishhook.c static-inline.mm ldid-master/ldid.cpp ldid-master/lookup2.c
  h5frida_CFLAGS = -fobjc-arc -fvisibility=hidden 
 -h5frida_CCFLAGS = -fobjc-arc -fvisibility=hidden -std=c++11
-+h5frida_CCFLAGS = -fobjc-arc -fvisibility=hidden -std=c++17
++h5frida_CCFLAGS = -fobjc-arc -fvisibility=hidden -std=c++17 -Wno-vla-cxx-extension
  h5frida_LDFLAGS += -L./
 -h5frida_LDFLAGS += libfrida-core-15.1.24.a -lresolv -ldobby_fixed
 +h5frida_LDFLAGS += libfrida-core-$(FRIDA_VERSION).a -lresolv -ldobby_fixed
