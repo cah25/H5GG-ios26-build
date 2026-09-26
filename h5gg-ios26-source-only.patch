@@ -59,7 +59,7 @@ index c672c01..6ebdd2b 100644
  
  include $(THEOS_MAKE_PATH)/tweak.mk
 diff --git a/pluginDemo/h5frida15.1.24/Makefile b/pluginDemo/h5frida15.1.24/Makefile
-index 7a06aa0..5397faf 100644
+index 7a06aa0..aa6cd9f 100644
 --- a/pluginDemo/h5frida15.1.24/Makefile
 +++ b/pluginDemo/h5frida15.1.24/Makefile
 @@ -1,5 +1,5 @@
@@ -79,7 +79,7 @@ index 7a06aa0..5397faf 100644
  h5frida_FILES = h5frida.mm fishhook.c static-inline.mm ldid-master/ldid.cpp ldid-master/lookup2.c
  h5frida_CFLAGS = -fobjc-arc -fvisibility=hidden 
 -h5frida_CCFLAGS = -fobjc-arc -fvisibility=hidden -std=c++11
-+h5frida_CCFLAGS = -fobjc-arc -fvisibility=hidden -std=c++17 -Wno-vla-cxx-extension -Wno-error=misleading-indentation -Wno-error=reorder-init-list -Wno-error=macro-redefined -Wno-error=deprecated-declarations -Wno-error=unused-but-set-variable
++h5frida_CCFLAGS = -fobjc-arc -fvisibility=hidden -std=c++17 -Wno-vla-cxx-extension -Wno-error=misleading-indentation -Wno-error=reorder-init-list -Wno-error=macro-redefined -Wno-error=deprecated-declarations -Wno-error=unused-but-set-variable -Wno-error=deprecated-non-prototype
  h5frida_LDFLAGS += -L./
 -h5frida_LDFLAGS += libfrida-core-15.1.24.a -lresolv -ldobby_fixed
 +h5frida_LDFLAGS += libfrida-core-$(FRIDA_VERSION).a -lresolv -ldobby_fixed
