@@ -24,6 +24,19 @@ index a0ae60c..5aa9878 100644
  clean::
  	rm -rf ./packages/*
 -
+diff --git a/ldid-master/ldid.cpp b/ldid-master/ldid.cpp
+index 701238d..e4a2d10 100644
+--- a/ldid-master/ldid.cpp
++++ b/ldid-master/ldid.cpp
+@@ -2723,7 +2723,7 @@ struct Rule {
+     Mode mode_;
+     std::string code_;
+ 
+-    mutable std::auto_ptr<Expression> regex_;
++    mutable std::unique_ptr<Expression> regex_;
+ 
+     Rule(unsigned weight, Mode mode, const std::string &code) :
+         weight_(weight),
 diff --git a/pluginDemo/customAlert/Makefile b/pluginDemo/customAlert/Makefile
 index c672c01..6ebdd2b 100644
 --- a/pluginDemo/customAlert/Makefile
