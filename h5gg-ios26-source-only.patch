@@ -59,7 +59,7 @@ index c672c01..6ebdd2b 100644
  
  include $(THEOS_MAKE_PATH)/tweak.mk
 diff --git a/pluginDemo/h5frida15.1.24/Makefile b/pluginDemo/h5frida15.1.24/Makefile
-index 7a06aa0..d730a35 100644
+index 7a06aa0..d2afe01 100644
 --- a/pluginDemo/h5frida15.1.24/Makefile
 +++ b/pluginDemo/h5frida15.1.24/Makefile
 @@ -1,5 +1,5 @@
@@ -84,7 +84,7 @@ index 7a06aa0..d730a35 100644
 +h5frida_CCFLAGS = -fobjc-arc -fvisibility=hidden -std=c++17 -Wno-vla-cxx-extension -Wno-error=misleading-indentation -Wno-error=reorder-init-list -Wno-error=macro-redefined -Wno-error=deprecated-declarations -Wno-error=unused-but-set-variable -Wno-error=deprecated-non-prototype
  h5frida_LDFLAGS += -L./
 -h5frida_LDFLAGS += libfrida-core-15.1.24.a -lresolv -ldobby_fixed
-+h5frida_LDFLAGS += libfrida-core-$(FRIDA_VERSION).a -lresolv -ldobby_fixed
++h5frida_LDFLAGS += libfrida-core-$(FRIDA_VERSION).a -lresolv -ldobby_fixed_universal
  h5frida_LOGOS_DEFAULT_GENERATOR = internal
  
  include $(THEOS_MAKE_PATH)/tweak.mk
